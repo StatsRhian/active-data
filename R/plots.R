@@ -34,6 +34,27 @@ df %>%
                "VirtualRide" = "green")
   )
 
+# Time series
+library(tsibble)
+library(feasts)
+sports = 
+df %>%
+  select(start_date, distance, moving_time, elapsed_time, type) %>%
+  mutate(start_date = lubridate::date(start_date)) %>%
+  filter(type %in% c("Ride", "Run")) %>%
+  group_by(start_date, type) %>%
+  summarise(across(distance:elapsed_time, sum)) %>%
+  ungroup() %>%
+  as_tsibble(key = type) %>%
+  fill_gaps() %>%
+  replace_na(list(distance = 0))
+
+sports %>% autoplot()
+
+sports %>%
+  gg_season(period = "week")
+
+sports %>% gg_subseries(period ="week")
 # Run activity count
 df %>%
   mutate(month_year = floor_date(start_date, unit = "month")) %>%
